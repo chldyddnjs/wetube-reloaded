@@ -2,6 +2,7 @@ import User from "../models/User";
 import bcrypt from "bcrypt";
 import fetch from "node-fetch";
 
+
 export const getJoin = (req,res) => res.render("join",{pageTitle:"Join"});
 export const postJoin = async(req,res) => {
     // console.log(req.body);
@@ -147,12 +148,15 @@ export const postEdit = async(req,res) => {
         },
         body: {name,email,username,location}, 
     } = req;
-    const data = await User.exists({email:req.body.email})
-
-    if (data === true){
+    const emailData = await User.exists({email:req.body.email})
+    const usernameData = await User.exists({username:req.body.username})
+    if (emailData || usernameData){
+        let str = "email";
+        if(usernameData) str = "username";
+        if(usernameData && emailData) str ="email/username";
         return res.status(400).render("edit-profile",{
             pageTitle: "Edit Profile",
-            errorMessage: "email is alredy exists"
+            errorMessage: ` ${str} is alredy exists`,
         });
     }
 
@@ -172,6 +176,17 @@ export const postEdit = async(req,res) => {
     req.session.user = updatedUser;
     return res.redirect("/users/edit");
 };
-//해결해야할 문제 바꾸려는데 이미있는 값이라면 어떻게 해야할까?
+
+export const getChangePassword = (req,res) => {
+    if(req.session.socialOnly === true){
+        return res.redirect("/");
+    }
+    return res.render("users/change-password");
+};
+
+export const postChangePassword = (req,res) => {
+    //send notification
+    return res.redirect("/");
+};
 export const remove = (req,res) => res.send("Remove User");
 export const see = (req,res) => res.send("See");
