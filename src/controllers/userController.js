@@ -150,10 +150,11 @@ export const postEdit = async(req,res) => {
     } = req;
     const emailData = await User.exists({email:req.body.email})
     const usernameData = await User.exists({username:req.body.username})
+    let str = "email";
+    if(usernameData) str = "username";
+    if(usernameData && emailData) str ="email/username";
+    
     if (emailData || usernameData){
-        let str = "email";
-        if(usernameData) str = "username";
-        if(usernameData && emailData) str ="email/username";
         return res.status(400).render("edit-profile",{
             pageTitle: "Edit Profile",
             errorMessage: ` ${str} is alredy exists`,
