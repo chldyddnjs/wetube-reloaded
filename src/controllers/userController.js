@@ -5,7 +5,7 @@ import fetch from "node-fetch";
 
 export const getJoin = (req,res) => res.render("join",{pageTitle:"Join"});
 export const postJoin = async(req,res) => {
-    // console.log(req.body);
+
     const {name,username,email,password,password2,location} = req.body;
     const pageTitle = "Join"
     if(password !== password2){
@@ -100,7 +100,7 @@ export const finishGithubLogin = async(req,res) => {
                 Authorization: `token ${access_token}`,
             },
         })).json();
-        console.log(userData);
+
         //take the users email
         const emailData = await (await fetch(`${apiUrl}/user/emails`,{
             headers:{
@@ -142,25 +142,28 @@ export const getEdit = (req,res) => {
     return res.render("edit-profile",{pageTitle:"Edit Profile"});
 }
 export const postEdit = async(req,res) => {
+    console.log(req.file);
     const {
         session:{
             user:{_id},
         },
-        body: {name,email,username,location}, 
+        body: {name,email,username,location},
+        file, 
     } = req;
+    console.log(file);
     const emailData = await User.exists({email:req.body.email})
     const usernameData = await User.exists({username:req.body.username})
-    let str = "email";
-    if(usernameData) str = "username";
-    if(usernameData && emailData) str ="email/username";
     
-    if (emailData || usernameData){
-        return res.status(400).render("edit-profile",{
-            pageTitle: "Edit Profile",
-            errorMessage: ` ${str} is alredy exists`,
-        });
-    }
-
+    // let str = "email";
+    // if(usernameData) str = "username";
+    // if(usernameData && emailData) str ="email/username";
+    
+    // if (emailData || usernameData){
+    //     return res.status(400).render("edit-profile",{
+    //         pageTitle: "Edit Profile",
+    //         errorMessage: ` ${str} is alredy exists`,
+    //     });
+    // }
     const updatedUser = await User.findByIdAndUpdate(_id,
         {
             name,
@@ -182,9 +185,32 @@ export const getChangePassword = (req,res) => {
     return res.render("users/change-password");
 };
 
-export const postChangePassword = (req,res) => {
+export const postChangePassword = async(req,res) => {
     //send notification
-    return res.redirect("/");
+    const {
+        session:{
+            user:{_id,password},
+        },
+        body: {oldPassword,newPassword,newPasswordConfirmation}, 
+    } = req;
+    const ok = await bcrypt.compare(oldPassword,password);
+    if(!ok){
+        return res.status(400).render("users/change-password",{
+            pageTitle:"Change Password",
+            errorMessage:"The current passsword is incorrect",
+        });
+    }
+    if(newPassword !== newPasswordConfirmation){
+        return res.status(400).render("users/change-password",{
+            pageTitle:"Change-password",
+            errorMessage:"The password does not match the confirmation",
+        });
+    }
+    const user = await User.findById(_id);
+    user.password = newPassword;
+    await user.save();
+    req.session.user.password = user.paassword;
+    return res.redirect("/users/logout");
 };
 export const remove = (req,res) => res.send("Remove User");
 export const see = (req,res) => res.send("See");

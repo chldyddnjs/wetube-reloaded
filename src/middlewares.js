@@ -1,6 +1,7 @@
+import multer from "multer";
 //template과 data를 공유하기 위한 메소드
 export const localsMiddleware = (req,res,next)=>{
-    console.log(req.session);
+    // console.log(req.session);
     //참값이라면
     res.locals.loggedIn = Boolean(req.session.loggedIn)
     res.locals.siteName = "Wetube"
@@ -24,3 +25,7 @@ export const publicOnlyMiddleware = (req,res,next) => {
         return res.redirect("/");
     }
 };
+
+export const uploadFiles = multer({
+    dest:"uploads/"
+});

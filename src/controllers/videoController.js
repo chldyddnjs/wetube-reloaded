@@ -18,7 +18,7 @@ export const watch = async(req,res) =>{
     const id = req.params.id;
     // const {id} = req.params;
     const video = await Video.findById(id);
-    console.log(video)
+    // console.log(video)
     if(video){
         return res.render("watch",{pageTitle: video.title,video:video});
     }
@@ -76,14 +76,14 @@ export const postUpload = async(req,res) => {
 };
 export const deleteVideo = async (req,res) => {
     const {id} = req.params;
-    console.log(id);
+
     await Video.findByIdAndDelete(id);
 
     return res.redirect("/");
 };
 
 export const search = async(req,res) => {
-    console.log(req.query);
+
     const {keyword} = req.query;
     let videos = [];
     if(keyword){
