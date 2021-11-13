@@ -1,6 +1,8 @@
 import User from "../models/User";
+import Video from "../models/Video";
 import bcrypt from "bcrypt";
 import fetch from "node-fetch";
+
 
 
 export const getJoin = (req,res) => res.render("join",{pageTitle:"Join"});
@@ -145,14 +147,13 @@ export const postEdit = async(req,res) => {
     console.log(req.file);
     const {
         session:{
-            user:{_id},
+            user:{_id, avatarUrl},
         },
         body: {name,email,username,location},
         file, 
     } = req;
-    console.log(file);
-    const emailData = await User.exists({email:req.body.email})
-    const usernameData = await User.exists({username:req.body.username})
+    // const emailData = await User.exists({email:req.body.email})
+    // const usernameData = await User.exists({username:req.body.username})
     
     // let str = "email";
     // if(usernameData) str = "username";
@@ -161,11 +162,13 @@ export const postEdit = async(req,res) => {
     // if (emailData || usernameData){
     //     return res.status(400).render("edit-profile",{
     //         pageTitle: "Edit Profile",
-    //         errorMessage: ` ${str} is alredy exists`,
+    //         errorMessage: `${str} is alredy exists`,
     //     });
     // }
     const updatedUser = await User.findByIdAndUpdate(_id,
         {
+            //파일이 존재하지 않으면 
+            avatarUrl: file ? file.path: avatarUrl,
             name,
             email,
             username,
@@ -180,8 +183,10 @@ export const postEdit = async(req,res) => {
 
 export const getChangePassword = (req,res) => {
     if(req.session.socialOnly === true){
+        req.flash("error","Can't change password");
         return res.redirect("/");
     }
+
     return res.render("users/change-password");
 };
 
@@ -209,8 +214,22 @@ export const postChangePassword = async(req,res) => {
     const user = await User.findById(_id);
     user.password = newPassword;
     await user.save();
-    req.session.user.password = user.paassword;
     return res.redirect("/users/logout");
 };
+export const see = async(req,res) =>{
+    const {id} = req.params;
+    const user = await User.findById(id).populate({
+            path:"videos",
+            populate:{
+                path:"owner",
+            }
+    });
+    if(!user){
+        return res.status(404).render("404",{pageTitle:"User not found."});
+    }
+    return res.render("users/profile",{
+        pageTitle:`${user.name}의 profile`,
+        user,
+    });
+}
 export const remove = (req,res) => res.send("Remove User");
-export const see = (req,res) => res.send("See");
